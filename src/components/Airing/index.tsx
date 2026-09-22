@@ -26,13 +26,15 @@ export default function Airing(props: {
 
   useEffect(() => {
     setLoading(true);
+    if (!animeList.length || !completedListIds.size) return;
     getAiringAnime(1, completedListIds, [], tags).then((entries) => {
       setList(entries);
       setLoading(false);
     });
-    console.log(list);
-    console.log(animeList);
+    console.log("list:", list);
+    console.log("animeList:", animeList);
   }, []);
+
   if (loading)
     return (
       <Center h="87vh">

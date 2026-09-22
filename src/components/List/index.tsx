@@ -298,7 +298,6 @@ export default function List(props: {
           displayTags={displayTags}
           averageScore={averageScore}
         />
-        {Object.keys(displayTags).length ? <Airing tags={displayTags} /> : null}
         <div />
         <hr />
         <Title className="results-header" order={1}>
