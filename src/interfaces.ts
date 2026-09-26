@@ -66,3 +66,23 @@ export interface AnimeList {
   status: string;
   entries: AnimeListEntry[];
 }
+
+export interface TagListEntry {
+  mediaId: number;
+  mediaName: string;
+  tagRank: number;
+  entryScore: number;
+  status: string;
+}
+
+export type TagList = Record<string, Record<string, TagListEntry[]>>;
+
+export interface RankedTag {
+  entries: TagListEntry[];
+  listScore: number;
+}
+
+export type RankedTagList = Record<string, {
+  tags: Record<string, RankedTag>;
+  keys: string[];
+}>;

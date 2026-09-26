@@ -1,31 +1,21 @@
-export function rankTags(tags: any) {
-  const tempTags = structuredClone(tags);
-  const categories = Object.keys(tags);
+import { RankedTagList, TagList } from "../interfaces";
 
-  for (const cat of categories) {
-    const catEntries: [string, any][] = Object.entries(tempTags[cat]);
-    for (const tag of catEntries) {
-      let ranks = 0;
-      for (const entry of tag[1]) {
-        ranks += tagMediaSorting(entry);
-      }
-      if (!tempTags[cat][tag[0]].listScore) {
-        const score: number = Math.floor(ranks / tag[1].length);
-        // console.log(score);
-        tempTags[cat][tag[0]].listScore = score;
-      }
+export function rankTags(tags: TagList): RankedTagList {
+  const ranked: RankedTagList = {};
+  for (const [category, categoryTags] of Object.entries(tags)) {
+    const rankedTags: RankedTagList[string]["tags"] = {};
+    for (const [name, entries] of Object.entries(categoryTags)) {
+      const total = entries.reduce((sum, entry) =>
+        sum + Math.round((entry.tagRank * entry.entryScore * entry.entryScore) / 10000), 0);
+      rankedTags[name] = {
+        entries: structuredClone(entries),
+        listScore: entries.length ? Math.floor(total / entries.length) : 0,
+      };
     }
-    const keys = Object.keys(tempTags[cat]);
-    keys.sort(
-      (a, b) => tempTags[cat][b].listScore - tempTags[cat][a].listScore
-    );
-    tempTags[cat].keys = keys;
+    ranked[category] = {
+      tags: rankedTags,
+      keys: Object.keys(rankedTags).sort((a, b) => rankedTags[b].listScore - rankedTags[a].listScore),
+    };
   }
-
-  return tempTags;
-}
-function tagMediaSorting(tag: { tagRank: number; entryScore: number }) {
-  const rank = tag.tagRank;
-  const score = tag.entryScore;
-  return Math.round((rank * score * score) / 10000);
+  return ranked;
 }

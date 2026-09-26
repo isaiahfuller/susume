@@ -1,15 +1,16 @@
-import { AnimeEntry } from "../interfaces";
+import { anilistRequest } from "./anilistRequest";
+import { AnimeEntry, RankedTagList } from "../interfaces";
 
 export async function getAiringAnime(
   page = 1,
   animeList: Set<number>,
   tempList: AnimeEntry[],
-  tags: any
+  tags: RankedTagList
 ): Promise<AnimeEntry[]> {
   const currentDate = new Date();
   const query = `
     {
-      Page(page: ${page}) {
+      Page(page: ${page}, perPage: 50) {
         pageInfo {
           total
           perPage
@@ -89,21 +90,12 @@ export async function getAiringAnime(
       }
     }
     `;
-  const response = await fetch("https://graphql.anilist.co", {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      query: query,
-    }),
-  });
-  const res = await response.json();
-  const media: AnimeEntry[] = res.data.Page.media;
-  const pageInfo = res.data.Page.pageInfo;
+  const data = await anilistRequest<{
+    Page: { media: AnimeEntry[]; pageInfo: { hasNextPage: boolean } };
+  }>(query);
+  const { media, pageInfo } = data.Page;
   const newList = [...tempList, ...media];
-  if (pageInfo.total === newList.length) {
+  if (!pageInfo.hasNextPage || media.length === 0) {
     return airingSort(
       newList.filter((e) => !e.isAdult),
       tags,
@@ -113,34 +105,34 @@ export async function getAiringAnime(
 }
 function airingSort(
   entries: AnimeEntry[],
-  tags: any,
+  tags: RankedTagList,
   animeList: Set<number>
 ): AnimeEntry[] {
-  const scores = new Map();
+  const scores = new Map<number, number>();
   for (const entry of entries) {
     for (const tag of entry.tags) {
-      if (!tags[tag.category] || !tags[tag.category][tag.name]) continue;
-      const score = tags[tag.category][tag.name].listScore * (tag.rank / 100);
+      if (!tags[tag.category] || !tags[tag.category].tags[tag.name]) continue;
+      const score = tags[tag.category].tags[tag.name].listScore * (tag.rank / 100);
       // console.log(score);
       scores.set(
         entry.id,
-        scores.has(entry.id) ? scores.get(entry.id) + score : score
+        scores.has(entry.id) ? (scores.get(entry.id) ?? 0) + score : score
       );
     }
-    scores.set(entry.id, scores.get(entry.id) / entry.tags.length);
+    scores.set(entry.id, (scores.get(entry.id) ?? 0) / Math.max(entry.tags.length, 1));
     if (entry.relations) {
       for (const edge of entry.relations.edges) {
         if (edge.relationType === "PREQUEL" && !animeList.has(edge.node.id))
-          scores.set(entry.id, scores.get(entry.id) / 2);
+          scores.set(entry.id, (scores.get(entry.id) ?? 0) / 2);
         if (edge.relationType === "PREQUEL" && animeList.has(edge.node.id))
-          scores.set(entry.id, scores.get(entry.id) * 1.2);
+          scores.set(entry.id, (scores.get(entry.id) ?? 0) * 1.2);
       }
     }
   }
   console.log(scores);
   const newEntries: AnimeEntry[] = entries.sort(
     (a: AnimeEntry, b: AnimeEntry) => {
-      return scores.get(b.id) - scores.get(a.id);
+      return (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0);
     }
   );
   return newEntries;

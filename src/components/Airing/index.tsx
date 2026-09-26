@@ -1,16 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
-import { AnimeEntry, AnimeList } from "../../interfaces";
-import { rankTags } from "../../utils/rankTags";
+import { AnimeEntry, AnimeList, RankedTagList } from "../../interfaces";
 import { getAiringAnime } from "../../utils/getAiringAnime";
-import { Title, Container, Center, Loader } from "@mantine/core";
+import { Title, Center, Loader, Stack } from "@mantine/core";
 import AnimeAccordion from "../AnimeAccordion";
 
 export default function Airing(props: {
-  tags: { [key: string]: any };
+  tags: RankedTagList;
   animeList: AnimeList[];
 }) {
-  const { animeList } = props;
-  const [tags, _setTags] = useState(rankTags(props.tags));
+  const { animeList, tags } = props;
   const [list, setList] = useState<AnimeEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const completedListIds = useMemo(() => {
@@ -25,15 +23,14 @@ export default function Airing(props: {
   }, [animeList]);
 
   useEffect(() => {
+    let active = true;
     setLoading(true);
-    if (!animeList.length || !completedListIds.size) return;
-    getAiringAnime(1, completedListIds, [], tags).then((entries) => {
-      setList(entries);
-      setLoading(false);
-    });
-    console.log("list:", list);
-    console.log("animeList:", animeList);
-  }, []);
+    getAiringAnime(1, completedListIds, [], tags)
+      .then((entries) => { if (active) setList(entries); })
+      .catch((error) => { if (active) console.error(error); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [completedListIds, tags]);
 
   if (loading)
     return (
@@ -43,10 +40,10 @@ export default function Airing(props: {
     );
   if (list.length)
     return (
-      <Container>
+      <Stack>
         <Title>Latest Anime</Title>
         {/* <Carousel recommendations={list} /> */}
         <AnimeAccordion list={list} />
-      </Container>
+      </Stack>
     );
 }

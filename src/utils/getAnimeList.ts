@@ -1,11 +1,11 @@
-import { AnimeList } from "../interfaces";
+import { anilistRequest } from "./anilistRequest";
+import { AnimeList, TagList } from "../interfaces";
 import { rankTags } from "./rankTags";
 
 export async function getAnimeList(
   id: number,
   accessToken: string,
-  setAverageScore: (avg: number) => void,
-  setTags: (tags: any) => void
+  refresh = false
 ) {
   // 57505
   const query = `
@@ -49,43 +49,27 @@ export async function getAnimeList(
       }
     }
     `;
-  fetch("https://graphql.anilist.co", {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + accessToken,
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-    body: JSON.stringify({
-      query: query,
-    }),
-  })
-    .then((res) => res.json())
-    .then((res) => {
-      // const lists = res.data.MediaListCollection.lists.filter(
-      //   (e: { status: string }) =>
-      //     ["COMPLETED", "DROPPED", "PLANNING"].includes(e.status)
-      // );
-      const lists = res.data.MediaListCollection.lists;
-      let scores = 0;
-      let entryCount = 0;
-      for (const list of lists) {
-        for (const entry of list.entries) {
-          scores += entry.score;
-          if (entry.score) entryCount++;
-        }
-      }
-      const averageScore = scores / entryCount;
-      setAverageScore(averageScore);
-      const calcTags = rankTags(getTags(lists, averageScore));
-      localStorage.setItem("full-list", JSON.stringify(lists));
-      localStorage.setItem("full-tags", JSON.stringify(calcTags));
-      setTags(calcTags);
-    });
+  const data = await anilistRequest<{ MediaListCollection: { lists: AnimeList[] } }>(query, accessToken, refresh);
+  const lists = data.MediaListCollection.lists;
+  return lists;
+}
+
+export function summarizeList(lists: AnimeList[]) {
+  let scores = 0;
+  let entryCount = 0;
+  for (const list of lists) {
+    for (const entry of list.entries) {
+      scores += entry.score;
+      if (entry.score) entryCount++;
+    }
+  }
+  const averageScore = entryCount ? scores / entryCount : 50;
+  const calcTags = rankTags(getTags(lists, averageScore));
+  return { averageScore, tags: calcTags };
 }
 
 function getTags(lists: AnimeList[], averageScore: number) {
-  const tags: { [key: string]: any } = {};
+  const tags: TagList = {};
   for (const list of lists) {
     for (const entry of list.entries) {
       for (const tag of entry.media.tags) {
