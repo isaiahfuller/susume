@@ -1,4 +1,0 @@
-.navbar{
-  @apply flex justify-between items-center;
-  @apply m-auto p-5 w-full;
-}

@@ -1,0 +1,10 @@
+.chevron {
+  &[data-rotate] {
+    transform: rotate(90deg);
+  }
+  rotate: -90deg;
+}
+
+.item {
+  box-shadow: var(--mantine-shadow-sm);
+}
