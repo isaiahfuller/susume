@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimeList, AnimeListEntry, RankedTagList } from "../../interfaces";
-import { Container, Text, Title } from "@mantine/core";
+import { Container, SimpleGrid, Text, Title } from "@mantine/core";
 import { Bar, BarChart, XAxis, YAxis, Tooltip } from "recharts";
+import TagPieChart from "./TagPieChart";
 
 interface ChartsProps {
   animeList: AnimeList[];
@@ -38,7 +39,6 @@ export default function Charts({ animeList, tagList }: ChartsProps) {
     }
     return ranges;
   }, [animeList]);
-  tagList;
 
   const getDecadesAvg = useCallback(() => {
     const completedCombined = [];
@@ -69,20 +69,22 @@ export default function Charts({ animeList, tagList }: ChartsProps) {
   }, [animeList]);
 
   useEffect(() => {
-    //     const tags: Tag = {};
-    // for (const [k, v] of Object.entries(tagList)) {
-    //   const sset = k.split("-")[0];
-    //   if (!tags[sset]) tags[sset] = {};
-    // const current = tags[sset];
-    // tags[sset] = { ...current, ...v };
-    // }
-    // console.log("tags", tags);
     getDecadesAvg();
   }, [getDecadesAvg]);
 
   return (
     <Container>
       <Title>Charts</Title>
+      <Text size="sm" c="dimmed" mt="md">
+        Inner rings show subcategories; outer rings show individual tags. Slice
+        sizes count anime per tag across your list. Anime with multiple tags count
+        toward each tag. Hover over a slice for details.
+      </Text>
+      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="lg" my="lg">
+        {["Theme", "Setting", "Cast"].map((category) => (
+          <TagPieChart key={category} category={category} tagList={tagList} />
+        ))}
+      </SimpleGrid>
       <Text fw={600}>Average score by decade</Text>
       <Text size="sm" c="dimmed">
         Completed anime with a score and a season year.
