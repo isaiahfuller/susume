@@ -34,6 +34,17 @@ export async function getAnimeList(
               type
               genres
               meanScore
+              recommendations(page: 1, perPage: 25, sort: RATING_DESC) {
+                nodes {
+                  mediaRecommendation {
+                    id
+                    title { userPreferred }
+                    coverImage { large }
+                    type
+                    isAdult
+                  }
+                }
+              }
               tags {
                 id
                 name

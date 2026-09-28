@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import "./index.css";
 import TagDisplay from "../TagDisplay";
 import Carousel from "../ListScroll";
+import CommunityRecommendations from "./CommunityRecommendations";
 import { AnimeEntry, AnimeList, RankedTagList } from "../../interfaces";
 import { Accordion, Alert, Button, Container, Flex, Title } from "@mantine/core";
 
@@ -152,6 +153,7 @@ export default function List(props: {
   if (animeList && animeList.length) {
     return (
       <Container>
+        <CommunityRecommendations animeList={animeList} />
         {searchError && <Alert color="red">{searchError}</Alert>}
         <TagDisplay
           tags={tagList}

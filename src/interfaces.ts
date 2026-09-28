@@ -6,7 +6,18 @@ export interface AnimeTag {
   isAdult: boolean;
 }
 
+export interface RecommendedMedia {
+  id: number;
+  title: { userPreferred: string };
+  coverImage: { large: string };
+  type: string;
+  isAdult: boolean;
+}
+
 export interface AnimeEntry {
+  recommendations?: {
+    nodes: ({ mediaRecommendation: RecommendedMedia | null } | null)[];
+  } | null;
   episodes: number;
   genres: string[];
   id: number;

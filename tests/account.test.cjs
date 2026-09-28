@@ -38,6 +38,10 @@ test('saved accounts survive reload, isolate users, deduplicate and preserve fai
     if (fail) return { ok: false, status: 429 };
     const id = options.headers.Authorization === 'Bearer alice' ? 1 : 2;
     const query = JSON.parse(options.body).query;
+    if (query.includes('MediaListCollection')) {
+      assert.match(query, /recommendations\(page: 1, perPage: 25, sort: RATING_DESC\)/);
+      assert.match(query, /mediaRecommendation/);
+    }
     const data = query.includes('Viewer') ? { Viewer: { id, name: `User ${id}` } } : {
       MediaListCollection: { lists: [{ name: `List ${id}`, status: 'COMPLETED', entries: [] }] },
     };
