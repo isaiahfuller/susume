@@ -35,3 +35,25 @@ test('handles empty and older cached lists without recommendation data', () => {
   assert.deepEqual(api.getCommunityRecommendations([]), []);
   assert.deepEqual(api.getCommunityRecommendations([list('COMPLETED', [1])]), []);
 });
+
+
+test('uses completed scores and the rated average for unscored sources', () => {
+  const lists = [list('COMPLETED', [1, 2, 3])];
+  lists[0].entries[0].score = 100;
+  lists[0].entries[1].score = 20;
+  lists[0].entries[2].score = 0;
+  Object.assign(lists[0].entries[0].media, page([media(10)]));
+  Object.assign(lists[0].entries[1].media, page([media(11), media(12)]));
+  Object.assign(lists[0].entries[2].media, page([media(12)]));
+  const results = client(() => { throw new Error('Must not call API'); }).getCommunityRecommendations(lists);
+  assert.deepEqual(results.map((item) => item.media.id), [12, 10, 11]);
+});
+
+
+test('option excludes recommendations on any list, including planning', () => {
+  const lists = [list('COMPLETED', [1]), list('PLANNING', [2])];
+  Object.assign(lists[0].entries[0].media, page([media(2), media(3)]));
+  const api = client(() => { throw new Error('Must not call API'); });
+  assert.deepEqual(api.getCommunityRecommendations(lists).map((item) => item.media.id), [2, 3]);
+  assert.deepEqual(api.getCommunityRecommendations(lists, true).map((item) => item.media.id), [3]);
+});

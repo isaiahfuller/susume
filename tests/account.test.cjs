@@ -23,13 +23,49 @@ function freshClient() {
   return load('src/utils/account.ts');
 }
 
+function mockIndexedDB(records) {
+  return {
+    open() {
+      const request = { result: {
+        createObjectStore() {},
+        close() {},
+        transaction() {
+          const transaction = {
+            objectStore() {
+              return {
+                get(key) {
+                  const operation = { result: records.get(key) };
+                  queueMicrotask(() => operation.onsuccess?.());
+                  return operation;
+                },
+                put(value, key) {
+                  records.set(key, structuredClone(value));
+                  queueMicrotask(() => transaction.oncomplete?.());
+                },
+              };
+            },
+          };
+          return transaction;
+        },
+      } };
+      queueMicrotask(() => request.onupgradeneeded?.());
+      queueMicrotask(() => request.onsuccess?.());
+      return request;
+    },
+  };
+}
+
 test('saved accounts survive reload, isolate users, deduplicate and preserve failed syncs', async () => {
   const originalFetch = global.fetch;
   const originalStorage = global.localStorage;
+  const originalIndexedDB = global.indexedDB;
   const storage = new Map();
+  const records = new Map();
+  global.indexedDB = mockIndexedDB(records);
   global.localStorage = {
     getItem: (key) => storage.get(key) ?? null,
     setItem: (key, value) => storage.set(key, value),
+    removeItem: (key) => storage.delete(key),
   };
   let calls = 0;
   let fail = false;
@@ -64,13 +100,22 @@ test('saved accounts survive reload, isolate users, deduplicate and preserve fai
     await assert.rejects(client.loadAccount('alice', true), /429/);
     assert.equal((await freshClient().loadAccount('alice')).id, 1);
     fail = false;
-    storage.set('susume-account-v1:1', '{broken');
+    records.set(1, { id: 1, name: 'User 1', lists: 'broken', syncedAt: Date.now() });
     await freshClient().loadAccount('alice');
     assert.equal(calls, 7, 'corrupt snapshot is fetched again');
+    assert.equal(storage.has('susume-account-v1:1'), false);
+    assert.equal(records.get(1).lists[0].name, 'List 1');
+    records.delete(1);
+    storage.set('susume-account-v1:1', JSON.stringify(alice));
+    assert.deepEqual(await freshClient().loadAccount('alice'), alice);
+    assert.equal(calls, 7, 'legacy snapshot migrates without a request');
+    assert.equal(storage.has('susume-account-v1:1'), false);
+    assert.deepEqual(records.get(1), alice);
     assert.ok(!JSON.stringify([...storage]).includes('Bearer'));
     assert.ok(![...storage.keys()].some((key) => key.includes('alice')));
   } finally {
     global.fetch = originalFetch;
     global.localStorage = originalStorage;
+    global.indexedDB = originalIndexedDB;
   }
 });

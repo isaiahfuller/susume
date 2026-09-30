@@ -165,7 +165,7 @@ export default function List(props: {
         />
         <div />
         {/* <hr /> */}
-        <Title className="results-header" order={1}>
+        {/* <Title className="results-header" order={1}>
           Recommended by tags
         </Title>
         <Flex direction="column" className="results">
@@ -204,7 +204,7 @@ export default function List(props: {
           >
             {recommendations.length ? "Load more..." : "Find recommendations"}
           </Button>
-        </Flex>
+        </Flex> */}
       </Container>
     );
   } else return <p>Your saved anime list is empty. Add anime on AniList, then sync your account.</p>;
