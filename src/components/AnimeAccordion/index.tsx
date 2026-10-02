@@ -37,7 +37,7 @@ export default function AnimeAccordion(props: { list: AnimeEntry[] }) {
             r.season
               ? r.season[0] + r.season.substring(1).toLowerCase() + " "
               : ""
-          }${r.year ? r.year : ""}`
+          }${r.year ? r.year : ""}`,
         );
       }
       if (r.type === "POPULAR") {
@@ -46,7 +46,7 @@ export default function AnimeAccordion(props: { list: AnimeEntry[] }) {
             r.season
               ? r.season[0] + r.season.substring(1).toLowerCase() + " "
               : ""
-          }${r.year ? r.year : ""}`
+          }${r.year ? r.year : ""}`,
         );
       }
     }
@@ -95,7 +95,10 @@ export default function AnimeAccordion(props: { list: AnimeEntry[] }) {
           <Text c="dimmed" size="xs">
             {popular.length ? (
               <>
-                <FontAwesomeIcon icon={faFireFlameCurved} color="#ed333b" />{" "}
+                <FontAwesomeIcon
+                  icon={faFireFlameCurved}
+                  color="#ed333b"
+                />{" "}
               </>
             ) : null}{" "}
             {popular.reverse().join(", ")}
@@ -120,18 +123,27 @@ export default function AnimeAccordion(props: { list: AnimeEntry[] }) {
             align="center"
             direction={width > 510 ? "row" : "column"}
           >
-            {e.trailer ? (
-              <>
-                <a target="_blank" href={`https://youtu.be/${e.trailer.id}`}>
-                  <Button>Watch trailer</Button>{" "}
-                </a>
-                <Divider
-                  orientation={width > 510 ? "horizontal" : "vertical"}
-                  p={4}
-                />
-              </>
-            ) : null}
             <Group gap={8}>
+              <Button
+                component="a"
+                href={e.siteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant="light"
+              >
+                View on AniList
+              </Button>
+              {e.trailer ? (
+                <>
+                  <a target="_blank" href={`https://youtu.be/${e.trailer.id}`}>
+                    <Button>Watch trailer</Button>{" "}
+                  </a>
+                  <Divider
+                    orientation={width > 510 ? "horizontal" : "vertical"}
+                    p={4}
+                  />
+                </>
+              ) : null}
               {e.externalLinks.map((e) => {
                 return (
                   <a href={e.url} target="_blank" key={e.url}>
