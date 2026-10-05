@@ -1,6 +1,16 @@
 services:
-  web:
-    build: .
+  anime-web:
+    build:
+      context: .
+      args:
+        VITE_ANILIST_CLIENT_ID: ${VITE_ANILIST_CLIENT_ID}
     ports:
       - "${PORT:-8080}:80"
     restart: unless-stopped
+    networks:
+      - imf
+
+networks:
+  imf:
+    name: "imf"
+    external: true

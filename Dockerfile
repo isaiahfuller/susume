@@ -6,7 +6,8 @@ COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY . .
-RUN npm run build
+ARG VITE_ANILIST_CLIENT_ID
+RUN VITE_ANILIST_CLIENT_ID=$VITE_ANILIST_CLIENT_ID npm run build
 
 FROM nginx:stable-alpine AS runtime
 

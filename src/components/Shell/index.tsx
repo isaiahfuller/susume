@@ -164,7 +164,7 @@ export default function Shell() {
                   Log Out
                 </Button>
               ) : (
-                <a href="https://anilist.co/api/v2/oauth/authorize?client_id=10680&response_type=token">
+                <a href={`https://anilist.co/api/v2/oauth/authorize?client_id=${import.meta.env.VITE_ANILIST_CLIENT_ID}&response_type=token`}>
                   <Button>Login with AniList</Button>
                 </a>
               )}

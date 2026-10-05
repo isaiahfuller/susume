@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 .dirac-cache
 .dirac/*
+.env
