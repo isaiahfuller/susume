@@ -1,6 +1,6 @@
 import { Center, Loader, Stack, Text } from "@mantine/core";
 import List from "./components/List";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import Charts from "./components/Charts";
 import Airing from "./components/Airing";
 import { summarizeList } from "./utils/getAnimeList";
@@ -15,15 +15,24 @@ interface AppProps {
 }
 
 function App({ loggedIn, accessToken, page, account, loading }: AppProps) {
-  const [visited, setVisited] = useState<number[]>([page]);
   const summary = useMemo(() => summarizeList(account?.lists || []), [account]);
 
-  useEffect(() => {
-    setVisited((pages) => pages.includes(page) ? pages : [...pages, page]);
-  }, [page]);
 
   if (!loggedIn) return <Text>Sign in with AniList to save your anime list in this browser.</Text>;
   if (!account && loading) return <Center><Loader /></Center>;
+
+  const currentPage = () => {
+    switch (page) {
+      case 0:
+        return <Airing tags={summary.tags} animeList={account?.lists || []} />;
+      case 1:
+        return <List accessToken={accessToken} animeList={account?.lists || []} tagList={summary.tags} />;
+      case 2:
+        return <Charts animeList={account?.lists || []} tagList={summary.tags} />;
+      default:
+        return null;
+    }
+  };
 
   return (
     <Stack>
@@ -35,9 +44,7 @@ function App({ loggedIn, accessToken, page, account, loading }: AppProps) {
         </Stack>
       {account && (
         <Stack key={account.syncedAt}>
-          {visited.includes(0) && <div hidden={page !== 0}><Airing tags={summary.tags} animeList={account.lists} /></div>}
-          {visited.includes(1) && <div hidden={page !== 1}><List accessToken={accessToken} animeList={account.lists} tagList={summary.tags} /></div>}
-          {visited.includes(2) && <div hidden={page !== 2}><Charts animeList={account.lists} tagList={summary.tags} /></div>}
+          {currentPage()}
         </Stack>
       )}
     </Stack>

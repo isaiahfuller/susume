@@ -29,10 +29,19 @@ const pages = [
 
 export default function Shell() {
   const [page, setPage] = useState(0);
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [accessToken, setAccessToken] = useState(
-    localStorage.getItem("anilist-token") || "",
-  );
+  const [{ loggedIn, accessToken }, setAuth] = useState(() => {
+    const params = new URLSearchParams(location.hash.slice(1));
+    const token = params.get("access_token");
+    const expiresIn = Number(params.get("expires_in"));
+    if (token && Number.isFinite(expiresIn) && expiresIn > 0) {
+      return { loggedIn: true, accessToken: token };
+    }
+    const tokenTime = localStorage.getItem("anilist-expires");
+    return {
+      loggedIn: Boolean(tokenTime && new Date(tokenTime) > new Date()),
+      accessToken: localStorage.getItem("anilist-token") || "",
+    };
+  });
   const [opened, { toggle }] = useDisclosure();
   const { ref: headerRef, height: headerHeight } = useElementSize();
   const [account, setAccount] = useState<Account | null>(null);
@@ -43,8 +52,6 @@ export default function Shell() {
   useEffect(() => {
     if (!loggedIn || !accessToken) return;
     let active = true;
-    setLoading(true);
-    setError("");
     loadAccount(accessToken, syncRevision > 0)
       .then((saved) => {
         if (active) setAccount(saved);
@@ -70,8 +77,7 @@ export default function Shell() {
     setError("");
     setLoading(true);
     setSyncRevision(0);
-    setLoggedIn(false);
-    setAccessToken("");
+    setAuth({ loggedIn: false, accessToken: "" });
     localStorage.setItem("anilist-token", "");
     localStorage.setItem("anilist-expires", "");
   }
@@ -86,17 +92,12 @@ export default function Shell() {
         "anilist-expires",
         new Date(Date.now() + expiresIn * 1000).toISOString(),
       );
-      setAccessToken(token);
       window.history.replaceState(
         null,
         "",
         location.pathname + location.search,
       );
     }
-    const tokenTime = localStorage.getItem("anilist-expires");
-    if (tokenTime && new Date(tokenTime) > new Date()) {
-      setLoggedIn(true);
-    } else setLoggedIn(false);
   }, []);
 
   function handleClick(e: React.MouseEvent<HTMLElement>, idx: number) {
@@ -149,7 +150,11 @@ export default function Shell() {
               {loggedIn && (
                 <Button
                   loading={loading}
-                  onClick={() => setSyncRevision((revision) => revision + 1)}
+                  onClick={() => {
+                    setLoading(true);
+                    setError("");
+                    setSyncRevision((revision) => revision + 1);
+                  }}
                 >
                   Sync with AniList
                 </Button>
