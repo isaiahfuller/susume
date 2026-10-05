@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { AnimeEntry, AnimeList, RankedTagList } from "../../interfaces";
 import { getAiringAnime } from "../../utils/getAiringAnime";
-import { Title, Center, Loader, Stack } from "@mantine/core";
+import { Title, Center, Loader, Text, Container } from "@mantine/core";
 import AnimeAccordion from "../AnimeAccordion";
 
 export default function Airing(props: {
@@ -15,7 +15,6 @@ export default function Airing(props: {
     const res = new Set<number>();
     for (const list of animeList) {
       for (const entry of list.entries) {
-        // console.log(entry.media.title.english);
         res.add(entry.media.id);
       }
     }
@@ -40,10 +39,12 @@ export default function Airing(props: {
     );
   if (list.length)
     return (
-      <Stack>
+      <Container>
         <Title>Latest Anime</Title>
-        {/* <Carousel recommendations={list} /> */}
+        <Text size="sm" c="dimmed" my="md">
+          Currently airing anime based on your completed list and tags.
+        </Text>
         <AnimeAccordion list={list} />
-      </Stack>
+      </Container>
     );
 }

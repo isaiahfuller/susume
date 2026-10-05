@@ -31,7 +31,7 @@ export default function Shell() {
   const [page, setPage] = useState(0);
   const [loggedIn, setLoggedIn] = useState(false);
   const [accessToken, setAccessToken] = useState(
-    localStorage.getItem("anilist-token") || ""
+    localStorage.getItem("anilist-token") || "",
   );
   const [opened, { toggle }] = useDisclosure();
   const { ref: headerRef, height: headerHeight } = useElementSize();
@@ -46,12 +46,23 @@ export default function Shell() {
     setLoading(true);
     setError("");
     loadAccount(accessToken, syncRevision > 0)
-      .then((saved) => { if (active) setAccount(saved); })
-      .catch((cause: unknown) => {
-        if (active) setError(cause instanceof Error ? cause.message : "Unable to sync your account.");
+      .then((saved) => {
+        if (active) setAccount(saved);
       })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
+      .catch((cause: unknown) => {
+        if (active)
+          setError(
+            cause instanceof Error
+              ? cause.message
+              : "Unable to sync your account.",
+          );
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
   }, [loggedIn, accessToken, syncRevision]);
 
   function logOut() {
@@ -71,9 +82,16 @@ export default function Shell() {
     const expiresIn = Number(params.get("expires_in"));
     if (token && Number.isFinite(expiresIn) && expiresIn > 0) {
       localStorage.setItem("anilist-token", token);
-      localStorage.setItem("anilist-expires", new Date(Date.now() + expiresIn * 1000).toISOString());
+      localStorage.setItem(
+        "anilist-expires",
+        new Date(Date.now() + expiresIn * 1000).toISOString(),
+      );
       setAccessToken(token);
-      window.history.replaceState(null, "", location.pathname + location.search);
+      window.history.replaceState(
+        null,
+        "",
+        location.pathname + location.search,
+      );
     }
     const tokenTime = localStorage.getItem("anilist-expires");
     if (tokenTime && new Date(tokenTime) > new Date()) {
@@ -81,7 +99,7 @@ export default function Shell() {
     } else setLoggedIn(false);
   }, []);
 
-  function handleClick(e: React.MouseEvent<HTMLAnchorElement>, idx: number) {
+  function handleClick(e: React.MouseEvent<HTMLElement>, idx: number) {
     e.preventDefault();
     setPage(idx);
   }
@@ -99,47 +117,54 @@ export default function Shell() {
     >
       <AppShell.Header>
         <Stack ref={headerRef} gap={0}>
-        <Group justify="space-between" align="center" px={8} py={8} mih={60}>
-          <Group align="center">
-            <Burger
-              opened={opened}
-              onClick={toggle}
-              hiddenFrom="sm"
-              size="sm"
-            />
-            <Stack align="center" p={24}>
-              <Title size="h4" lh={0.1}>
-                勧め
-              </Title>
-              <Text lh={0} size="sm" c="dimmed">
-                susume
-              </Text>
-            </Stack>
-          </Group>
-          
-          {error && (
-            <Alert color="red" mx={8} py={8} role="alert">
-              <Text c="red" span><FontAwesomeIcon icon={faExclamationTriangle} /> </Text>{error} {account && "Your previously saved list is still available."}
-            </Alert>
-          )}
+          <Group justify="space-between" align="center" px={8} py={8} mih={60}>
+            <Group align="center">
+              <Burger
+                opened={opened}
+                onClick={toggle}
+                hiddenFrom="sm"
+                size="sm"
+              />
+              <Stack align="center" p={24}>
+                <Title size="h4" lh={0.1}>
+                  勧め
+                </Title>
+                <Text lh={0} size="sm" c="dimmed">
+                  susume
+                </Text>
+              </Stack>
+            </Group>
 
-          <Group gap="xs">
-            {loggedIn && (
-              <Button loading={loading} onClick={() => setSyncRevision((revision) => revision + 1)}>
-                Sync with AniList
-              </Button>
+            {error && (
+              <Alert color="red" mx={8} py={8} role="alert">
+                <Text c="red" span>
+                  <FontAwesomeIcon icon={faExclamationTriangle} />{" "}
+                </Text>
+                {error}{" "}
+                {account && "Your previously saved list is still available."}
+              </Alert>
             )}
-            {loggedIn ? (
-              <Button variant="subtle" onClick={() => logOut()}>
-                Log Out
-              </Button>
-            ) : (
-              <a href="https://anilist.co/api/v2/oauth/authorize?client_id=10680&response_type=token">
-                <Button>Login with AniList</Button>
-              </a>
-            )}
+
+            <Group gap="xs">
+              {loggedIn && (
+                <Button
+                  loading={loading}
+                  onClick={() => setSyncRevision((revision) => revision + 1)}
+                >
+                  Sync with AniList
+                </Button>
+              )}
+              {loggedIn ? (
+                <Button variant="subtle" onClick={() => logOut()}>
+                  Log Out
+                </Button>
+              ) : (
+                <a href="https://anilist.co/api/v2/oauth/authorize?client_id=10680&response_type=token">
+                  <Button>Login with AniList</Button>
+                </a>
+              )}
+            </Group>
           </Group>
-        </Group>
         </Stack>
       </AppShell.Header>
 
@@ -154,7 +179,9 @@ export default function Shell() {
                 key={i}
                 onClick={(e) => handleClick(e, i)}
                 leftSection={<FontAwesomeIcon icon={e.icon} />}
-                rightSection={<FontAwesomeIcon icon={faChevronRight} size="xs" />}
+                rightSection={
+                  <FontAwesomeIcon icon={faChevronRight} size="xs" />
+                }
               />
             ))}
           </Stack>
@@ -163,7 +190,14 @@ export default function Shell() {
       </AppShell.Navbar>
 
       <AppShell.Main>
-        <App key={`${loggedIn}:${accessToken}`} loggedIn={loggedIn} accessToken={accessToken} page={page} account={account} loading={loading} />
+        <App
+          key={`${loggedIn}:${accessToken}`}
+          loggedIn={loggedIn}
+          accessToken={accessToken}
+          page={page}
+          account={account}
+          loading={loading}
+        />
       </AppShell.Main>
     </AppShell>
   );
